@@ -1,6 +1,6 @@
 ---
 # test run below
-# ansible-playbook create-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=1601 fi=3600 fi_octet=36 vendor=ATT"
+# ansible-playbook create-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=1602 fi=3700 fi_octet=37 vendor=ATT"
 
 - name: Create subinterface
   hosts: vios-rt1
@@ -13,9 +13,6 @@
     vendor: "{{ vendor }}"
 
   tasks:
-    - name: Debug the priority
-      debug:
-        var: sdwan_hsrp_priority
     - name: configure interface settings
       ios_config:
         lines:
@@ -45,9 +42,6 @@
     vendor: "{{ vendor }}"
 
   tasks:
-    - name: Debug the priority
-      debug:
-        var: sdwan_hsrp_priority
     - name: configure interface settings
       ios_config:
         lines:
