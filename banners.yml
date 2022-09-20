@@ -1,0 +1,14 @@
+---
+
+- name: Create login banner
+  hosts: ios
+  connection: network_cli
+  gather_facts: no
+
+  tasks:
+    - name: configure the login banner
+      ios_banner:
+        banner: login
+        state: present
+        text: "This is the login banner with two blank lines after.\n\n"
+      tags: login

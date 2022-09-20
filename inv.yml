@@ -1,0 +1,9 @@
+---
+all:
+  children:
+    ios:
+      hosts:
+        vios-rt1:
+          ansible_host: 192.168.128.119
+        vios-rt2:
+          ansible_host: 192.168.128.124

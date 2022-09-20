@@ -1,0 +1,4 @@
+---
+ansible_username: "josue"
+ansible_password: "cisco"
+ansible_network_os: "ios"

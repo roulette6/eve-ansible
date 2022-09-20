@@ -1,0 +1,67 @@
+---
+# test run below
+# ansible-playbook create-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=1601 fi=3600 fi_octet=36 vendor=ATT"
+
+- name: Create subinterface
+  hosts: vios-rt1
+  connection: network_cli
+  gather_facts: no
+  vars:
+    vlan_id: "{{ vlan_id }}"
+    fi: "{{ fi }}"
+    fi_octet: "{{ fi_octet }}"
+    vendor: "{{ vendor }}"
+
+  tasks:
+    - name: Debug the priority
+      debug:
+        var: sdwan_hsrp_priority
+    - name: configure interface settings
+      ios_config:
+        lines:
+          - "description FI{{ fi }} to {{ vendor }}"
+          - "encapsulation dot1Q {{ vlan_id }}"
+          # - vrf forwarding TODO
+          - "ip address 10.{{ fi_octet }}.0.2 255.255.255.0"
+          - no ip redirects
+          - no ip unreachables
+          - no ip proxy-arp
+          # - ip access-group TODO in
+          - standby version 2
+          - "standby 36 ip 10.{{ fi_octet }}.0.1"
+          - "standby 36 priority {{ sdwan_hsrp_priority }}"
+          - "standby 36 authentication md5 key-string 0 {{ fi }}_HRSRP"
+          - no shutdown
+        parents: "interface GigabitEthernet0/2.{{ vlan_id }}"
+
+- name: Create subinterface
+  hosts: vios-rt2
+  connection: network_cli
+  gather_facts: no
+  vars:
+    vlan_id: "{{ vlan_id }}"
+    fi: "{{ fi }}"
+    fi_octet: "{{ fi_octet }}"
+    vendor: "{{ vendor }}"
+
+  tasks:
+    - name: Debug the priority
+      debug:
+        var: sdwan_hsrp_priority
+    - name: configure interface settings
+      ios_config:
+        lines:
+          - "description FI{{fi}} to {{ vendor }}"
+          - "encapsulation dot1Q {{ vlan_id }}"
+          # - vrf forwarding TODO
+          - "ip address 10.{{ fi_octet }}.0.3 255.255.255.0"
+          - no ip redirects
+          - no ip unreachables
+          - no ip proxy-arp
+          # - ip access-group TODO in
+          - standby version 2
+          - "standby 36 ip 10.{{ fi_octet }}.0.1"
+          - "standby 36 priority {{ sdwan_hsrp_priority }}"
+          - "standby 36 authentication md5 key-string 0 {{ fi }}_HRSRP"
+          - no shutdown
+        parents: "interface GigabitEthernet0/2.{{ vlan_id }}"

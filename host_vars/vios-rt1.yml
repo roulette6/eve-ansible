@@ -1,0 +1,2 @@
+---
+sdwan_hsrp_priority: "{{ 100 if vlan_id | int % 2 == 0 else 90 }}"
