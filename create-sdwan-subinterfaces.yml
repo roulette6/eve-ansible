@@ -1,61 +1,54 @@
 ---
 # test run below
-# ansible-playbook create-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=1602 fi=3700 fi_octet=37 vendor=ATT"
+# ansible-playbook create-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=1602 fi_num=1010 fi_octet=10 vendor=acme"
+# ansible-playbook create-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=1602 fi_num=1020 fi_octet=20 vendor=acme"
+# ansible-playbook create-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=1602 fi_num=1030 fi_octet=30 vendor=acme"
 
-- name: Create subinterface
+# ansible-playbook create-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=2000 fi_num=3070 fi_octet=70 vendor=evilcorp"
+# ansible-playbook create-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=2001 fi_num=3080 fi_octet=80 vendor=evilcorp"
+# ansible-playbook create-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=2002 fi_num=3090 fi_octet=90 vendor=evilcorp"
+
+
+- name: Create vendor sub-interface on wert
   hosts: vios-rt1
   connection: network_cli
   gather_facts: no
   vars:
     vlan_id: "{{ vlan_id }}"
-    fi: "{{ fi }}"
+    fi_num: "{{ fi }}"
     fi_octet: "{{ fi_octet }}"
     vendor: "{{ vendor }}"
+    ip_addr: "{{ vendor }}.{{ ip_addr_and_mask }}"
+    # ip_addr: "{{ acme.ip_addr_and_mask }}"
+    vip_addr: "{{ vendor }}.{{ vip_addr }}"
 
   tasks:
-    - name: configure interface settings
-      ios_config:
-        lines:
-          - "description FI{{ fi }} to {{ vendor }}"
-          - "encapsulation dot1Q {{ vlan_id }}"
-          # - vrf forwarding TODO
-          - "ip address 10.{{ fi_octet }}.0.2 255.255.255.0"
-          - no ip redirects
-          - no ip unreachables
-          - no ip proxy-arp
-          # - ip access-group TODO in
-          - standby version 2
-          - "standby 36 ip 10.{{ fi_octet }}.0.1"
-          - "standby 36 priority {{ sdwan_hsrp_priority }}"
-          - "standby 36 authentication md5 key-string 0 {{ fi }}_HRSRP"
-          - no shutdown
-        parents: "interface GigabitEthernet0/2.{{ vlan_id }}"
+    - name: debug vars
+      debug:
+        var: ip_addr
+    # - name: configure sub-interface settings
+    #   ios_config:
+    #     lines:
+    #       - "descr BK{{ fi_num }} to {{ vendor }}"
+    #       - "encapsulation dot1Q {{ vlan_id }}"
+    #       - "ip address {{ ip_addr }}"
+    #       # - "ip address {{ vendor }}.{{ ip_addr_and_mask }}"
+    #       - "vrf forwarding core"
+    #       - "no ip redirects"
+    #       - "no ip unreachables"
+    #       - "no ip proxy-arp"
+    #       - "ip access-group {{ sdwan_acl }} in"
+    #       - "standby {{ vlan_id }} version 2"
+    #       - "standby {{ vlan_id }} ip {{ vip_addr }}"
+    #       - "standby {{ vlan_id }} priority {{ sdwan_hsrp_priority }}"
+    #       - "standby {{ vlan_id }} authentication md5 key-string 0 {{ fi_num }}_HSRP"
+    #       - "no shutdown"
+    #     parents: "interface GigabitEthernet0/2.{{ vlan_id }}"
 
-- name: Create subinterface
-  hosts: vios-rt2
-  connection: network_cli
-  gather_facts: no
-  vars:
-    vlan_id: "{{ vlan_id }}"
-    fi: "{{ fi }}"
-    fi_octet: "{{ fi_octet }}"
-    vendor: "{{ vendor }}"
+    # - name: configure HSRP priority based on VLAN
+    #   ios_config:
+    #     lines:
+    #       - "standby {{ vlan_id }} preempt"
+    #     parents: "interface GigabitEthernet0/2.{{ vlan_id }}"
+    #   when: sdwan_hsrp_priority == 100
 
-  tasks:
-    - name: configure interface settings
-      ios_config:
-        lines:
-          - "description FI{{fi}} to {{ vendor }}"
-          - "encapsulation dot1Q {{ vlan_id }}"
-          # - vrf forwarding TODO
-          - "ip address 10.{{ fi_octet }}.0.3 255.255.255.0"
-          - no ip redirects
-          - no ip unreachables
-          - no ip proxy-arp
-          # - ip access-group TODO in
-          - standby version 2
-          - "standby 36 ip 10.{{ fi_octet }}.0.1"
-          - "standby 36 priority {{ sdwan_hsrp_priority }}"
-          - "standby 36 authentication md5 key-string 0 {{ fi }}_HRSRP"
-          - no shutdown
-        parents: "interface GigabitEthernet0/2.{{ vlan_id }}"

@@ -1,2 +1,11 @@
 ---
-sdwan_hsrp_priority: "{{ 90 if vlan_id | int % 2 == 0 else 100 }}"
+sdwan_acl: sdwan-acl
+sdwan_hsrp_priority: "{{ 100 if vlan_id | int % 2 == 0 else 90 }}"
+
+acme:
+  ip_addr_and_mask: "10.{{ fi_octet }}.10.3 255.255.255.248"
+  vip_addr: "10.{{ fi_octet }}.10.1"
+
+evilcorp:
+  ip_addr_and_mask: "10.{{ fi_octet }}.20.3 255.255.255.0"
+  vip_addr: "10.{{ fi_octet }}.20.1"
