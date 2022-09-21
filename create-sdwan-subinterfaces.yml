@@ -1,16 +1,10 @@
 ---
 # test run below
-# ansible-playbook create-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=1602 fi_num=1010 fi_octet=10 vendor=acme"
-# ansible-playbook create-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=1602 fi_num=1020 fi_octet=20 vendor=acme"
-# ansible-playbook create-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=1602 fi_num=1030 fi_octet=30 vendor=acme"
-
-# ansible-playbook create-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=2000 fi_num=3070 fi_octet=70 vendor=evilcorp"
-# ansible-playbook create-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=2001 fi_num=3080 fi_octet=80 vendor=evilcorp"
-# ansible-playbook create-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=2002 fi_num=3090 fi_octet=90 vendor=evilcorp"
-
+# ansible-playbook create-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=101 fi_num=1010 fi_octet=10 vendor=att" && ansible-playbook create-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=102 fi_num=1020 fi_octet=20 vendor=att" && ansible-playbook create-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=103 fi_num=1030 fi_octet=30 vendor=att"
+# ansible-playbook create-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=201 fi_num=3070 fi_octet=70 vendor=comcast" && ansible-playbook create-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=202 fi_num=3080 fi_octet=80 vendor=comcast" && ansible-playbook create-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=203 fi_num=3090 fi_octet=90 vendor=comcast"
 
 - name: Create vendor sub-interface on wert
-  hosts: vios-rt1
+  hosts: ios
   connection: network_cli
   gather_facts: no
   vars:
@@ -18,37 +12,36 @@
     fi_num: "{{ fi }}"
     fi_octet: "{{ fi_octet }}"
     vendor: "{{ vendor }}"
-    ip_addr: "{{ vendor }}.{{ ip_addr_and_mask }}"
-    # ip_addr: "{{ acme.ip_addr_and_mask }}"
-    vip_addr: "{{ vendor }}.{{ vip_addr }}"
+    ip_addr_and_mask: "{{ att_ip_addr_and_mask if vendor == 'att' else comcast_ip_addr_and_mask }}"
+    vip_addr: "{{ att_vip_addr if vendor == 'att' else comcast_vip_addr }}"
 
   tasks:
-    - name: debug vars
-      debug:
-        var: ip_addr
-    # - name: configure sub-interface settings
-    #   ios_config:
-    #     lines:
-    #       - "descr BK{{ fi_num }} to {{ vendor }}"
-    #       - "encapsulation dot1Q {{ vlan_id }}"
-    #       - "ip address {{ ip_addr }}"
-    #       # - "ip address {{ vendor }}.{{ ip_addr_and_mask }}"
-    #       - "vrf forwarding core"
-    #       - "no ip redirects"
-    #       - "no ip unreachables"
-    #       - "no ip proxy-arp"
-    #       - "ip access-group {{ sdwan_acl }} in"
-    #       - "standby {{ vlan_id }} version 2"
-    #       - "standby {{ vlan_id }} ip {{ vip_addr }}"
-    #       - "standby {{ vlan_id }} priority {{ sdwan_hsrp_priority }}"
-    #       - "standby {{ vlan_id }} authentication md5 key-string 0 {{ fi_num }}_HSRP"
-    #       - "no shutdown"
-    #     parents: "interface GigabitEthernet0/2.{{ vlan_id }}"
+    - name: configure sub-interface settings
+      ios_config:
+        lines:
+          - "descr BK{{ fi_num }} to {{ vendor }}"
+          - "encapsulation dot1Q {{ vlan_id }}"
+          - "ip address {{ ip_addr_and_mask }}"
+          - "vrf forwarding core"
+          - "no ip redirects"
+          - "no ip unreachables"
+          - "no ip proxy-arp"
+          - "ip access-group {{ sdwan_acl }} in"
+          - "standby version 2"
+          - "standby {{ vlan_id }} ip {{ vip_addr }}"
+          - "standby {{ vlan_id }} priority {{ sdwan_hsrp_priority }}"
+          - "standby {{ vlan_id }} authentication md5 key-string 0 {{ fi_num }}_HSRP"
+          - "no shutdown"
+        parents: "interface GigabitEthernet0/2.{{ vlan_id }}"
 
-    # - name: configure HSRP priority based on VLAN
-    #   ios_config:
-    #     lines:
-    #       - "standby {{ vlan_id }} preempt"
-    #     parents: "interface GigabitEthernet0/2.{{ vlan_id }}"
-    #   when: sdwan_hsrp_priority == 100
+    - name: configure HSRP preemption based on VLAN
+      ios_config:
+        lines:
+          - "standby {{ vlan_id }} preempt"
+        parents: "interface GigabitEthernet0/2.{{ vlan_id }}"
+      when: sdwan_hsrp_priority == "100"
+    
+    - name: Save configs
+      ios_config:
+        save_when: always
 
