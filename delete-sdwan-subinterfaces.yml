@@ -1,0 +1,18 @@
+---
+# test runs below
+# ansible-playbook delete-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=101 vendor=att" && ansible-playbook delete-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=102 vendor=att"
+# ansible-playbook delete-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=201 vendor=comcast" && ansible-playbook delete-sdwan-subinterfaces.yml -i inv.yml --extra-vars "vlan_id=202 vendor=comcast"
+
+- name: "Delete {{ vendor }} sub-interface on wert"
+  hosts: ios
+  connection: network_cli
+  gather_facts: no
+  vars:
+    vlan_id: "{{ vlan_id }}"
+
+  tasks:
+    - name: "Delete subinterface GigabitEthernet0/2.{{ vlan_id }}"
+      ios_config:
+        lines:
+          - no interface GigabitEthernet0/2.{{ vlan_id }}
+        save_when: modified
